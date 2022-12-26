@@ -131,7 +131,9 @@ def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
     next_type, next_value = lex[0]
     if next_type == Token.OPERATOR:
         operator_buffer = []
-        while lex[0][0] == Token.OPERATOR:
+        while lex[0][0] == Token.OPERATOR and (
+            not operator_buffer or lex[0][1] not in b"!~+-"
+        ):
             operator_buffer.append(lex.pop(0)[1])
 
         operator = b"".join(operator_buffer)

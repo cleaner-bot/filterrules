@@ -39,6 +39,8 @@ from filterrules.lexer import Token, lex
         (b"whitespace strip test", ((Token.NAME, b"whitespacestriptest"),)),
         (b"'whitespace strip test'", ((Token.STRING, b"whitespace strip test"),)),
         (b"'\\x0a'", ((Token.STRING, b"\n"),)),
+        (b"'te st'", ((Token.STRING, b"te st"),)),
+        (b"te st", ((Token.NAME, b"test"),)),
     ),
 )
 def test_lexer(input: bytes, expected: tuple[tuple[Token, bytes], ...]) -> None:

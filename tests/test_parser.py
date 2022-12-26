@@ -27,6 +27,12 @@ from filterrules.parser import parse
         (b"~true", ast.UnaryOperation("bnot", ast.Variable("true"))),
         (b"+true", ast.UnaryOperation("plus", ast.Variable("true"))),
         (b"'string'", ast.Constant(b"string")),
+        (
+            b"1 && !2",
+            ast.BinaryOperation(
+                "and", ast.Constant(1), ast.UnaryOperation("not", ast.Constant(2))
+            ),
+        ),
     ),
 )
 def test_parser(input: bytes, expected: ast.ExpressionLike) -> None:
