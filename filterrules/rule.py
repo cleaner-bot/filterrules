@@ -34,7 +34,9 @@ class Rule(typing.NamedTuple):
     def compile(self) -> typing.Callable[[Variables, Functions], typing.Any]:
         expr = _compile(self.expr, self.untrusted)
         if self.untrusted:
-            fn = eval(_UNTRUSTED_COMPILER % expr, {}, {})(_untrusted_add, _untrusted_lshift)
+            fn = eval(_UNTRUSTED_COMPILER % expr, {}, {})(
+                _untrusted_add, _untrusted_lshift
+            )
         else:
             fn = eval(_TRUSTED_COMPILER % expr, {}, {})
         return typing.cast(typing.Callable[[Variables, Functions], typing.Any], fn)
