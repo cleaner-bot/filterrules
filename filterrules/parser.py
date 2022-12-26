@@ -151,7 +151,7 @@ def _parse(lex: list[tuple[Token, bytes]], dept: int) -> ast.ExpressionLike:
             return ast.BinaryOperation(
                 right.operator,
                 ast.BinaryOperation(_operator_names[operator], node, right.left),
-                right.right
+                right.right,
             )
         return ast.BinaryOperation(_operator_names[operator], node, right)
 
