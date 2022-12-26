@@ -22,7 +22,8 @@ print(compiled({"bot_score": 100}, {}))
 ```
 
 To validate if code is valid before executing it, you can use the `lint()`
-function to type-check it.
+function to type-check it. You **must** lint the AST before compiling it,
+otherwise you could be vulnerable to memory exhaustion attacks.
 
 ```py
 from filterrules import lint, parse
@@ -51,8 +52,13 @@ prevent memory exhaustion attacks or other issues.
 `rule.evaluate()` runs in linear time O(n), assuming all called foreign
 functions are also linear time.
 
+Before using `rule.compile()`, you should **always** run `lint()`, otherwise
+you are vulnerable to memory exhaustion attacks even with **untrsted=True**!!!
+(you should always lint code regardless, but it's very important when using 
+compile!)
+
 Possible DoS payloads blocked by `untrusted=True` (the default):
 
 - `1 << 99999999999999`
 - `2 ** 99999999999999`
-- `"x" * (1 << 128)` (this is a linter error too, but executes fine with untrusted=False)
+- `"x" * (1 << 128)` (**NOT** blocked when using `.compile()`, but caught by linter)
