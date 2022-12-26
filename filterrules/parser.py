@@ -144,6 +144,15 @@ def _parse(lex: list[tuple[Token, bytes]], dept: int) -> ast.ExpressionLike:
             raise SyntaxError(f"unknown OPERATOR: {operator!r}")
 
         right = _parse(lex, dept + 1)
+        # make operations in the order left to right, instead of
+        # right to left
+        # eg 1 + 2 + 3 is add(add(1, 2), 3) instead of add(1, add(2, 3))
+        if isinstance(right, ast.BinaryOperation):
+            return ast.BinaryOperation(
+                right.operator,
+                ast.BinaryOperation(_operator_names[operator], node, right.left),
+                right.right
+            )
         return ast.BinaryOperation(_operator_names[operator], node, right)
 
     else:

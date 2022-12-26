@@ -14,8 +14,8 @@ from filterrules.parser import parse
             b"1 + 2 + 3",
             ast.BinaryOperation(
                 "add",
-                ast.Constant(1),
-                ast.BinaryOperation("add", ast.Constant(2), ast.Constant(3)),
+                ast.BinaryOperation("add", ast.Constant(1), ast.Constant(2)),
+                ast.Constant(3),
             ),
         ),
         (b"1 << 32", ast.BinaryOperation("lshift", ast.Constant(1), ast.Constant(32))),

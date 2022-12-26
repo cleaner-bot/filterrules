@@ -102,3 +102,18 @@ def test_unknown_ast() -> None:
     with pytest.raises(RuntimeError, match="unknown ast node: .+"):
         rule = Rule(object)  # type: ignore
         rule.compile()
+
+
+@pytest.mark.parametrize(("input", "expected"), (
+    (b"1 + 2 * 3", 9),
+    (b"10 * 2 + 3", 23),
+    (b"(10 * 2) + 3", 23),
+    (b"10 * 5 - 3", 47),
+    (b"10 * (2 + 3)", 50),
+))
+def test_operator_precedence(input: bytes, expected: int) -> None:
+    rule = Rule(parse(input))
+    compiled = rule.compile()
+
+    assert rule.evaluate({}, {}) == expected
+    assert compiled({}, {}) == expected

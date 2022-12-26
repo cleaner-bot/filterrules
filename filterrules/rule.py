@@ -197,7 +197,7 @@ def _compile(expr: ast.ExpressionLike, untrusted: bool) -> str:
                 elif operator in ("lshift", "add"):
                     return f"__untrusted_{operator}({left}, {right})"
 
-            return f"{left} {_binary_operator_map[operator]} {right}"
+            return f"({left} {_binary_operator_map[operator]} {right})"
 
         case ast.UnaryOperation(operator, _):
             value = _compile(expr.value, untrusted)
