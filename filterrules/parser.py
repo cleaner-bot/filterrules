@@ -6,7 +6,7 @@ from .lexer import Token, lex
 
 def parse(code: bytes) -> ast.ExpressionLike:
     lexed = list(lex(code))
-    return _parse(lexed)
+    return _parse(lexed, 0)
 
 
 _unary_names: dict[bytes, typing.Literal["not", "plus", "minus", "bnot"]] = {
@@ -62,7 +62,10 @@ _operator_names: dict[
 _closing_separators = {b"(": b")", b"[": b"]"}
 
 
-def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
+def _parse(lex: list[tuple[Token, bytes]], dept: int) -> ast.ExpressionLike:
+    if dept > 100:
+        raise SyntaxError("too deeply nested code")
+
     first_type, first_value = lex.pop(0)
     node: ast.ExpressionLike
     match first_type:
@@ -78,7 +81,7 @@ def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
         case Token.STRING:
             node = ast.Constant(first_value)
         case Token.SEPARATOR if first_value in b"([":
-            node = ast.Block(_parse(lex))
+            node = ast.Block(_parse(lex, dept + 1))
             second_type, second_value = lex.pop(0)
             expected = _closing_separators[first_value]
             # if second_type != Token.SEPARATOR:
@@ -89,7 +92,7 @@ def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
                     f"not {second_value!r}"
                 )
         case Token.OPERATOR if first_value in b"!~+-":
-            node = ast.UnaryOperation(_unary_names[first_value], _parse(lex))
+            node = ast.UnaryOperation(_unary_names[first_value], _parse(lex, dept + 1))
         case _:
             raise SyntaxError(f"unexpected {first_value!r} ({first_type})")
 
@@ -111,7 +114,7 @@ def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
             lex.pop(0)
         else:
             while lex:
-                arg = _parse(lex)
+                arg = _parse(lex, dept + 1)
                 args.append(arg)
                 comma_type, comma_value = lex.pop(0)
                 # if comma_type != Token.SEPARATOR:
@@ -140,7 +143,7 @@ def _parse(lex: list[tuple[Token, bytes]]) -> ast.ExpressionLike:
         if operator not in _operator_names:
             raise SyntaxError(f"unknown OPERATOR: {operator!r}")
 
-        right = _parse(lex)
+        right = _parse(lex, dept + 1)
         return ast.BinaryOperation(_operator_names[operator], node, right)
 
     else:

@@ -69,3 +69,8 @@ def test_invalid_operator() -> None:
 def test_invalid_code() -> None:
     with pytest.raises(SyntaxError, match="expected OPERATOR, not Token.STRING"):
         parse(b"test'abcdef'")
+
+
+def test_recursion() -> None:
+    with pytest.raises(SyntaxError, match="too deeply nested code"):
+        parse(b"+".join(b"1" for _ in range(10000)))
