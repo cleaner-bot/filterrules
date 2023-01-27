@@ -33,6 +33,16 @@ from filterrules.parser import parse
                 "and", ast.Constant(1), ast.UnaryOperation("not", ast.Constant(2))
             ),
         ),
+        (
+            b"1 && !2 && 3",
+            ast.BinaryOperation(
+                "and",
+                ast.BinaryOperation(
+                    "and", ast.Constant(1), ast.UnaryOperation("not", ast.Constant(2))
+                ),
+                ast.Constant(3),
+            ),
+        ),
     ),
 )
 def test_parser(input: bytes, expected: ast.ExpressionLike) -> None:

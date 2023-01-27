@@ -62,7 +62,9 @@ _operator_names: dict[
 _closing_separators = {b"(": b")", b"[": b"]"}
 
 
-def _parse(lex: list[tuple[Token, bytes]], dept: int) -> ast.ExpressionLike:
+def _parse(
+    lex: list[tuple[Token, bytes]], dept: int, parse_expresion: bool = True
+) -> ast.ExpressionLike:
     if dept > 100:
         raise SyntaxError("too deeply nested code")
 
@@ -92,11 +94,13 @@ def _parse(lex: list[tuple[Token, bytes]], dept: int) -> ast.ExpressionLike:
                     f"not {second_value!r}"
                 )
         case Token.OPERATOR if first_value in b"!~+-":
-            node = ast.UnaryOperation(_unary_names[first_value], _parse(lex, dept + 1))
+            node = ast.UnaryOperation(
+                _unary_names[first_value], _parse(lex, dept + 1, False)
+            )
         case _:
             raise SyntaxError(f"unexpected {first_value!r} ({first_type})")
 
-    if not lex:
+    if not lex or not parse_expresion:
         return node
 
     next_type, next_value = lex[0]
