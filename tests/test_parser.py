@@ -45,8 +45,16 @@ from filterrules.parser import parse
         ),
         (b"a(b)", ast.FunctionCall("a", (ast.Variable("b"),))),
         (b"a(b, c)", ast.FunctionCall("a", (ast.Variable("b"), ast.Variable("c")))),
-        (b"a(b(c))", ast.FunctionCall("a", (ast.FunctionCall("b", (ast.Variable("c"),)),))),
-        (b"a(b(c), c)", ast.FunctionCall("a", (ast.FunctionCall("b", (ast.Variable("c"),)), ast.Variable("c")))),
+        (
+            b"a(b(c))",
+            ast.FunctionCall("a", (ast.FunctionCall("b", (ast.Variable("c"),)),)),
+        ),
+        (
+            b"a(b(c), c)",
+            ast.FunctionCall(
+                "a", (ast.FunctionCall("b", (ast.Variable("c"),)), ast.Variable("c"))
+            ),
+        ),
     ),
 )
 def test_parser(input: bytes, expected: ast.ExpressionLike) -> None:
