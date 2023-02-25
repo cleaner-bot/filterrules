@@ -103,10 +103,8 @@ def _parse(
     if not lex or not parse_expresion:
         return node
 
-    next_type, next_value = lex[0]
-
-    if next_type == Token.SEPARATOR:
-        if next_value != b"(":
+    while lex and lex[0][0] == Token.SEPARATOR:
+        if lex[0][1] != b"(":
             return node
         lex.pop(0)
         if first_type != Token.NAME:
