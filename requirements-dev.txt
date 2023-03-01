@@ -2,5 +2,5 @@ pytest>=7.0,<7.3
 coverage>=6.3,<7.1
 flake8>=4.0,<6.1
 flake8-isort>=4.1,<6.1
-mypy==0.991
+mypy==1.0.1
 codespell>=2.1,<2.3
