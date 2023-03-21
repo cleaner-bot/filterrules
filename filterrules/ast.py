@@ -4,6 +4,29 @@ import typing
 
 AllowedTypes = bytes | str | int | float
 
+BinaryOperators = typing.Literal[
+    "add",
+    "subtract",
+    "multiply",
+    "divide",
+    "modulo",
+    "pow",
+    "equals",
+    "not-equals",
+    "greater-than",
+    "greater-than-or-equals",
+    "less-than",
+    "less-than-or-equals",
+    "and",
+    "or",
+    "band",
+    "bor",
+    "bxor",
+    "lshift",
+    "rshift",
+]
+UnaryOperators = typing.Literal["not", "plus", "minus", "bnot"]
+
 
 class Constant(typing.NamedTuple):
     value: AllowedTypes
@@ -18,33 +41,13 @@ class Block(typing.NamedTuple):
 
 
 class BinaryOperation(typing.NamedTuple):
-    operator: typing.Literal[
-        "add",
-        "subtract",
-        "multiply",
-        "divide",
-        "modulo",
-        "pow",
-        "equals",
-        "not-equals",
-        "greater-than",
-        "greater-than-or-equals",
-        "less-than",
-        "less-than-or-equals",
-        "and",
-        "or",
-        "band",
-        "bor",
-        "bxor",
-        "lshift",
-        "rshift",
-    ]
+    operator: BinaryOperators
     left: ExpressionLike
     right: ExpressionLike
 
 
 class UnaryOperation(typing.NamedTuple):
-    operator: typing.Literal["not", "plus", "minus", "bnot"]
+    operator: UnaryOperators
     value: ExpressionLike
 
 

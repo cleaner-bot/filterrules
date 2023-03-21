@@ -15,30 +15,7 @@ _unary_names: dict[bytes, typing.Literal["not", "plus", "minus", "bnot"]] = {
     b"+": "plus",
     b"-": "minus",
 }
-_operator_names: dict[
-    bytes,
-    typing.Literal[
-        "add",
-        "subtract",
-        "multiply",
-        "divide",
-        "modulo",
-        "pow",
-        "equals",
-        "not-equals",
-        "greater-than",
-        "greater-than-or-equals",
-        "less-than",
-        "less-than-or-equals",
-        "and",
-        "or",
-        "band",
-        "bor",
-        "bxor",
-        "lshift",
-        "rshift",
-    ],
-] = {
+_operator_names: dict[bytes, ast.BinaryOperators] = {
     b"+": "add",
     b"-": "subtract",
     b"*": "multiply",
