@@ -59,6 +59,9 @@ def _evaluate(expr: ast.ExpressionLike, ctx: RuleContext) -> typing.Any:
         case ast.Variable(key):
             return ctx.variables[key]
 
+        case ast.ArrayConstructor(items):
+            return tuple(_evaluate(item, ctx) for item in items)
+
         case ast.BinaryOperation(operator, _, _):
             left = _evaluate(expr.left, ctx)
             match operator:  # short circuit logic
@@ -185,6 +188,10 @@ def _compile(expr: ast.ExpressionLike, untrusted: bool) -> str:
 
         case ast.Variable(key):
             return f"vars[{key!r}]"
+
+        case ast.ArrayConstructor(items):
+            content = ", ".join(_compile(item, untrusted) for item in items)
+            return f"[{content}]"
 
         case ast.BinaryOperation(operator, _, _):
             left = _compile(expr.left, untrusted)

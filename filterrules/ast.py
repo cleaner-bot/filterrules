@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import typing
 
-AllowedTypes = bytes | str | int | float
-
 BinaryOperators = typing.Literal[
     "add",
     "subtract",
@@ -24,12 +22,17 @@ BinaryOperators = typing.Literal[
     "bxor",
     "lshift",
     "rshift",
+    "in",
 ]
 UnaryOperators = typing.Literal["not", "plus", "minus", "bnot"]
 
 
 class Constant(typing.NamedTuple):
-    value: AllowedTypes
+    value: bytes | str | int | float
+
+
+class ArrayConstructor(typing.NamedTuple):
+    items: tuple[ExpressionLike, ...]
 
 
 class Variable(typing.NamedTuple):
@@ -57,5 +60,11 @@ class FunctionCall(typing.NamedTuple):
 
 
 ExpressionLike = (
-    Constant | Variable | Block | BinaryOperation | UnaryOperation | FunctionCall
+    Constant
+    | Variable
+    | Block
+    | BinaryOperation
+    | UnaryOperation
+    | FunctionCall
+    | ArrayConstructor
 )

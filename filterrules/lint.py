@@ -39,6 +39,13 @@ def _lint(expr: ast.ExpressionLike, ctx: LintContext) -> type:
                 raise RuntimeError(f"variable not found: {key!r}")
             return ctx.variables[key]
 
+        case ast.ArrayConstructor(items):
+            types = set(_lint(item, ctx) for item in items)
+            if len(types) != 1:
+                raise RuntimeError(f"unable to determine array type: {types!r}")
+            the_type, = types
+            return list[the_type]  # type: ignore
+
         case ast.BinaryOperation(operator, _, _):
             left = _lint(expr.left, ctx)
             right = _lint(expr.right, ctx)
@@ -119,6 +126,22 @@ def _lint(expr: ast.ExpressionLike, ctx: LintContext) -> type:
                             f"{left.__name__!r} and {right.__name__!r}"
                         )
                     return right
+                case "in":
+                    if right.mro()[0] != list:
+                        raise RuntimeError(
+                            f"cannot use in operator on non-lists: {right!r}"
+                        )
+                    args: tuple[type, ...] = getattr(right, "__args__", ())
+                    if not args:
+                        raise RuntimeError(
+                            f"cannot use in operator on untyped lists: {right!r}"
+                        )
+                    if left != args[0]:
+                        raise RuntimeError(
+                            f"cannot use in operator on different types: "
+                            f"{left.__name__!r} and {args[0].__name__!r}"
+                        )
+                    return bool
 
         case ast.UnaryOperation(operator, _):
             valuetype = _lint(expr.value, ctx)

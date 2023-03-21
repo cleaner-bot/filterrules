@@ -35,6 +35,7 @@ _operator_names: dict[bytes, ast.BinaryOperators] = {
     b"^": "bxor",
     b"<<": "lshift",
     b">>": "rshift",
+    b"in": "in",
 }
 _closing_separators = {b"(": b")", b"[": b"]"}
 
@@ -57,9 +58,11 @@ def _parse(
                     node = ast.Constant(float(value))
                 except ValueError:
                     node = ast.Variable(value)
+
         case Token.STRING:
             node = ast.Constant(first_value)
-        case Token.SEPARATOR if first_value in b"([":
+
+        case Token.SEPARATOR if first_value == b"(":
             node = ast.Block(_parse(lex, dept + 1))
             second_type, second_value = lex.pop(0)
             expected = _closing_separators[first_value]
@@ -70,10 +73,16 @@ def _parse(
                     f"unexpected closing SEPARATOR, expected {expected!r}, "
                     f"not {second_value!r}"
                 )
+
+        case Token.SEPARATOR if first_value == b"[":
+            items = _parse_repeated(lex, dept, b"]")
+            node = ast.ArrayConstructor(items)
+
         case Token.OPERATOR if first_value in b"!~+-":
             node = ast.UnaryOperation(
                 _unary_names[first_value], _parse(lex, dept + 1, False)
             )
+
         case _:
             raise SyntaxError(f"unexpected {first_value!r} ({first_type})")
 
@@ -88,24 +97,8 @@ def _parse(
             raise SyntaxError(
                 f"must be a NAME before a function call, not {first_type}"
             )
-        args = []
-        if lex[0] == (Token.SEPARATOR, b")"):
-            lex.pop(0)
-        else:
-            while lex:
-                arg = _parse(lex, dept + 1)
-                args.append(arg)
-                comma_type, comma_value = lex.pop(0)
-                # if comma_type != Token.SEPARATOR:
-                #     raise SyntaxError(f"expected SEPARATOR, not {comma_type}")
-                if comma_value == b")":
-                    break
-                elif comma_value != b",":
-                    raise SyntaxError(
-                        f"unexpected SEPARATOR, expected , or ), not {comma_value!r}"
-                    )
-
-        node = ast.FunctionCall(first_value.decode(), tuple(args))
+        args = _parse_repeated(lex, dept, b")")
+        node = ast.FunctionCall(first_value.decode(), args)
 
     if not lex:
         return node
@@ -136,3 +129,27 @@ def _parse(
 
     else:
         raise SyntaxError(f"expected OPERATOR, not {next_type}")
+
+
+def _parse_repeated(
+    lex: list[tuple[Token, bytes]], dept: int, closing_char: bytes
+) -> tuple[ast.ExpressionLike, ...]:
+    args = []
+    if lex[0] == (Token.SEPARATOR, closing_char):
+        lex.pop(0)
+    else:
+        while lex:
+            arg = _parse(lex, dept + 1)
+            args.append(arg)
+            comma_type, comma_value = lex.pop(0)
+            # if comma_type != Token.SEPARATOR:
+            #     raise SyntaxError(f"expected SEPARATOR, not {comma_type}")
+            if comma_value == closing_char:
+                break
+            elif comma_value != b",":
+                raise SyntaxError(
+                    f"unexpected SEPARATOR, expected , or "
+                    f"{closing_char.decode()}, not {comma_value!r}"
+                )
+
+    return tuple(args)
