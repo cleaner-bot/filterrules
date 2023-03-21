@@ -129,16 +129,16 @@ def _lint(expr: ast.ExpressionLike, ctx: LintContext) -> type:
                 case "in":
                     if right.mro()[0] != list:
                         raise RuntimeError(
-                            f"cannot use in operator on non-lists: {right!r}"
+                            f"cannot use {operator} operator on non-lists: {right!r}"
                         )
                     args: tuple[type, ...] = getattr(right, "__args__", ())
                     if not args:
                         raise RuntimeError(
-                            f"cannot use in operator on untyped lists: {right!r}"
+                            f"cannot use {operator} operator on untyped lists: {right!r}"
                         )
                     if left != args[0]:
                         raise RuntimeError(
-                            f"cannot use in operator on different types: "
+                            f"cannot use {operator} operator on different types: "
                             f"{left.__name__!r} and {args[0].__name__!r}"
                         )
                     return bool

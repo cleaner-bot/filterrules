@@ -120,3 +120,22 @@ def test_operator_precedence(input: bytes, expected: int) -> None:
 
     assert rule.evaluate({}, {}) == expected
     assert compiled({}, {}) == expected
+
+
+def test_array_in() -> None:
+    rule = Rule(parse(b"a ~ [0, 1]"))
+    compiled = rule.compile()
+
+    assert rule.evaluate({
+        "a": 1,
+    }, {}) is True
+    assert compiled({
+        "a": 1,
+    }, {}) is True
+
+    assert rule.evaluate({
+        "a": 2,
+    }, {}) is False
+    assert compiled({
+        "a": 2,
+    }, {}) is False

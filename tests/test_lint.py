@@ -57,10 +57,15 @@ from filterrules.parser import parse
             "expected ('int',)",
         ),
         (b"fn(1) & 1", None),
+        (b"[]", "unable to determine array type: set()"),
+        (b"var ~ [1, 2, 3]", None),
+        (b"var ~ [1.0]", "cannot use in operator on different types: 'int' and 'float'"),
+        (b"var ~ var", "cannot use in operator on non-lists: <class 'int'>"),
+        (b"var ~ list", "cannot use in operator on untyped lists: <class 'list'>"),
     ),
 )
 def test_lint(input: bytes, expected: str | None) -> None:
-    assert lint(parse(input), {"var": int}, {"fn": ((int,), int)}) == expected
+    assert lint(parse(input), {"var": int, "list": list}, {"fn": ((int,), int)}) == expected
 
 
 @pytest.mark.parametrize(

@@ -134,6 +134,8 @@ def _evaluate(expr: ast.ExpressionLike, ctx: RuleContext) -> typing.Any:
                     return left << right
                 case "rshift":
                     return left >> right
+                case "in":
+                    return left in right
 
         case ast.UnaryOperation(operator, _):
             value = _evaluate(expr.value, ctx)
@@ -174,6 +176,7 @@ _binary_operator_map = {
     "bxor": "^",
     "lshift": "<<",
     "rshift": ">>",
+    "in": "in",
 }
 _unaery_operator_map = {"not": "not", "bnot": "~", "plus": "+", "minus": "-"}
 

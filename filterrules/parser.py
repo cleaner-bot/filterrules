@@ -35,7 +35,7 @@ _operator_names: dict[bytes, ast.BinaryOperators] = {
     b"^": "bxor",
     b"<<": "lshift",
     b">>": "rshift",
-    b"in": "in",
+    b"~": "in",
 }
 _closing_separators = {b"(": b")", b"[": b"]"}
 

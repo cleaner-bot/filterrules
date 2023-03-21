@@ -55,6 +55,7 @@ from filterrules.parser import parse
                 "a", (ast.FunctionCall("b", (ast.Variable("c"),)), ast.Variable("c"))
             ),
         ),
+        (b"[1, 2]", ast.ArrayConstructor((ast.Constant(1), ast.Constant(2)))),
     ),
 )
 def test_parser(input: bytes, expected: ast.ExpressionLike) -> None:
