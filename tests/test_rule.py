@@ -6,18 +6,13 @@ from filterrules.parser import parse
 from filterrules.rule import Rule
 
 
-def test_simple_rule() -> None:
-    rule = Rule(parse(b"true"))
-    compiled = rule.compile()
-    assert rule.evaluate({"true": True}, {}) is True
-    assert compiled({"true": True}, {}) is True
-
-
 @pytest.mark.parametrize(
     "input, expected",
     (
         (b"123 + 456", 579),
         (b"(123)", 123),
+        (b"0 ~ [0, 1]", True),
+        (b"0 ~ [1]", False),
     ),
 )
 def test_expression(input: bytes, expected: typing.Any) -> None:
@@ -25,6 +20,13 @@ def test_expression(input: bytes, expected: typing.Any) -> None:
     compiled = rule.compile()
     assert rule.evaluate({}, {}) == expected
     assert compiled({}, {}) == expected
+
+
+def test_variable() -> None:
+    rule = Rule(parse(b"true"))
+    compiled = rule.compile()
+    assert rule.evaluate({"true": True}, {}) is True
+    assert compiled({"true": True}, {}) is True
 
 
 def test_function_call() -> None:
@@ -123,14 +125,3 @@ def test_operator_precedence(input: bytes, expected: int) -> None:
 
     assert rule.evaluate({}, {}) == expected
     assert compiled({}, {}) == expected
-
-
-def test_array_in() -> None:
-    rule = Rule(parse(b"a ~ [0, 1]"))
-    compiled = rule.compile()
-
-    assert rule.evaluate({"a": 1}, {}) is True
-    assert compiled({"a": 1}, {}) is True
-
-    assert rule.evaluate({"a": 2}, {}) is False
-    assert compiled({"a": 2}, {}) is False
