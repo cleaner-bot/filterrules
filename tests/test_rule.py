@@ -1,3 +1,5 @@
+import typing
+
 import pytest
 
 from filterrules.parser import parse
@@ -11,18 +13,18 @@ def test_simple_rule() -> None:
     assert compiled({"true": True}, {}) is True
 
 
-def test_math_rule() -> None:
-    rule = Rule(parse(b"123 + 456"))
+@pytest.mark.parametrize(
+    "input, expected",
+    (
+        (b"123 + 456", 579),
+        (b"(123)", 123),
+    ),
+)
+def test_expression(input: bytes, expected: typing.Any) -> None:
+    rule = Rule(parse(input))
     compiled = rule.compile()
-    assert rule.evaluate({}, {}) == 579
-    assert compiled({}, {}) == 579
-
-
-def test_block() -> None:
-    rule = Rule(parse(b"(123)"))
-    compiled = rule.compile()
-    assert rule.evaluate({}, {}) == 123
-    assert compiled({}, {}) == 123
+    assert rule.evaluate({}, {}) == expected
+    assert compiled({}, {}) == expected
 
 
 def test_function_call() -> None:
@@ -56,9 +58,10 @@ def test_function_call() -> None:
 )
 def test_math(operation: str) -> None:
     rule = Rule(parse(f"456 {operation} 123".encode()), untrusted=False)
+    expected = eval(f"456 {operation} 123")
     compiled = rule.compile()
-    assert rule.evaluate({}, {}) == eval(f"456 {operation} 123")
-    assert compiled({}, {}) == eval(f"456 {operation} 123")
+    assert rule.evaluate({}, {}) == expected
+    assert compiled({}, {}) == expected
 
 
 @pytest.mark.parametrize("operation", ("not", "~", "+", "-"))
