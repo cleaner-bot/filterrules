@@ -66,13 +66,13 @@ def test_math(operation: str) -> None:
     assert compiled({}, {}) == expected
 
 
-@pytest.mark.parametrize("operation", ("not", "~", "+", "-"))
+@pytest.mark.parametrize("operation", ("!", "~", "+", "-"))
 def test_unary(operation: str) -> None:
-    op = "!" if operation == "not" else operation
-    rule = Rule(parse(f"{op} -42069".encode()))
+    python_operator = "not" if operation == "!" else operation
+    rule = Rule(parse(f"{operation} -42069".encode()))
     compiled = rule.compile()
-    assert rule.evaluate({}, {}) == eval(f"{operation} -42069")
-    assert compiled({}, {}) == eval(f"{operation} -42069")
+    assert rule.evaluate({}, {}) == eval(f"{python_operator} -42069")
+    assert compiled({}, {}) == eval(f"{python_operator} -42069")
 
 
 def test_and() -> None:
