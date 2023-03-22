@@ -43,7 +43,7 @@ def _lint(expr: ast.ExpressionLike, ctx: LintContext) -> type:
             types = set(_lint(item, ctx) for item in items)
             if len(types) != 1:
                 raise RuntimeError(f"unable to determine array type: {types!r}")
-            the_type, = types
+            (the_type,) = types
             return list[the_type]  # type: ignore
 
         case ast.BinaryOperation(operator, _, _):
@@ -134,7 +134,8 @@ def _lint(expr: ast.ExpressionLike, ctx: LintContext) -> type:
                     args: tuple[type, ...] = getattr(right, "__args__", ())
                     if not args:
                         raise RuntimeError(
-                            f"cannot use {operator} operator on untyped lists: {right!r}"
+                            f"cannot use {operator} operator on untyped lists: "
+                            f"{right!r}"
                         )
                     if left != args[0]:
                         raise RuntimeError(
