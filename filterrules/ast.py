@@ -35,6 +35,10 @@ class ArrayConstructor(typing.NamedTuple):
     items: tuple[ExpressionLike, ...]
 
 
+class ArrayComprehension(typing.NamedTuple):
+    body: BinaryOperation
+
+
 class Variable(typing.NamedTuple):
     name: str
 
@@ -67,4 +71,5 @@ ExpressionLike = (
     | UnaryOperation
     | FunctionCall
     | ArrayConstructor
+    | ArrayComprehension
 )

@@ -37,7 +37,7 @@ _operator_names: dict[bytes, ast.BinaryOperators] = {
     b">>": "rshift",
     b"~": "in",
 }
-_closing_separators = {b"(": b")", b"[": b"]"}
+_closing_separators = {b"(": b")", b"[": b"]", b"{": b"}"}
 
 
 def _parse(
@@ -62,8 +62,8 @@ def _parse(
         case Token.STRING:
             node = ast.Constant(first_value)
 
-        case Token.SEPARATOR if first_value == b"(":
-            node = ast.Block(_parse(lex, dept + 1))
+        case Token.SEPARATOR if first_value in b"({":
+            content = _parse(lex, dept + 1)
             second_type, second_value = lex.pop(0)
             expected = _closing_separators[first_value]
             # if second_type != Token.SEPARATOR:
@@ -73,6 +73,15 @@ def _parse(
                     f"unexpected closing SEPARATOR, expected {expected!r}, "
                     f"not {second_value!r}"
                 )
+
+            if first_value == b"(":
+                node = ast.Block(content)
+            else:
+                if not isinstance(content, ast.BinaryOperation):
+                    raise SyntaxError(
+                        "expected a BinaryOperation within an ArrayComprehension"
+                    )
+                node = ast.ArrayComprehension(content)
 
         case Token.SEPARATOR if first_value == b"[":
             items = _parse_repeated(lex, dept, b"]")
@@ -103,6 +112,12 @@ def _parse(
     if not lex:
         return node
 
+    return _parse_binary_operator(lex, node, dept)
+
+
+def _parse_binary_operator(
+    lex: list[tuple[Token, bytes]], node: ast.ExpressionLike, dept: int
+) -> ast.ExpressionLike:
     next_type, next_value = lex[0]
     if next_type == Token.OPERATOR:
         operator_buffer: list[bytes] = []

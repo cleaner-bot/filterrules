@@ -1,5 +1,6 @@
 import pytest
 
+from filterrules import ast
 from filterrules.lint import lint
 from filterrules.parser import parse
 
@@ -65,6 +66,12 @@ from filterrules.parser import parse
         ),
         (b"var ~ var", "cannot use in operator on non-lists: <class 'int'>"),
         (b"var ~ list", "cannot use in operator on untyped lists: <class 'list'>"),
+        (b"{[0] == 0}", None),
+        (
+            b"{list == 1}",
+            "cannot use list comprehension on untyped lists: <class 'list'>",
+        ),
+        (b"{0 == 1}", "cannot use list comprehension on non-lists: <class 'int'>"),
     ),
 )
 def test_lint(input: bytes, expected: str | None) -> None:
@@ -90,4 +97,16 @@ def test_trusted_lint(input: bytes, expected: str | None) -> None:
 
 
 def test_invalid_ast_lint() -> None:
-    assert lint(object(), {}, {}).startswith("unknown ast node: ")  # type: ignore
+    error = lint(object(), {}, {})  # type: ignore
+    assert error is not None
+    assert error.startswith("unknown ast node: ")
+
+
+def test_invalid_operator() -> None:
+    error = lint(
+        ast.BinaryOperation("x", ast.Constant(0), ast.Constant(0)),  # type: ignore
+        {},
+        {},
+    )
+    assert error is not None
+    assert error.startswith("unknown operator: ")

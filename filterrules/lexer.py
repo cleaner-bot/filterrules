@@ -13,7 +13,7 @@ class Token(enum.Enum):
 STRING_CHARS = (b"'", b'"')
 ESCAPED_STRINGS = {b"n": b"\n", b"r": b"\r"}
 HEX_CHARS = b"0123456789abcdef"
-SEPARATOR_CHARS = b"()[],"
+SEPARATOR_CHARS = b"()[]{},"
 OPERATOR_CHARS = b"+-*/=!<>&|^~%"
 WHITESPACE_CHARS = string.whitespace.encode()
 

@@ -97,3 +97,10 @@ def test_invalid_code() -> None:
 def test_recursion() -> None:
     with pytest.raises(SyntaxError, match="too deeply nested code"):
         parse(b"+".join(b"1" for _ in range(10000)))
+
+
+def test_invalid_list_comprehension() -> None:
+    with pytest.raises(
+        SyntaxError, match="expected a BinaryOperation within an ArrayComprehension"
+    ):
+        parse(b"{0}")

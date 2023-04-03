@@ -13,6 +13,7 @@ from filterrules.rule import Rule
         (b"(123)", 123),
         (b"0 ~ [0, 1]", True),
         (b"0 ~ [1]", False),
+        (b"!0 ~ {[0, 1] == 1}", True),
     ),
 )
 def test_expression(input: bytes, expected: typing.Any) -> None:
@@ -125,3 +126,19 @@ def test_operator_precedence(input: bytes, expected: int) -> None:
 
     assert rule.evaluate({}, {}) == expected
     assert compiled({}, {}) == expected
+
+
+@pytest.mark.parametrize(
+    "input",
+    (
+        b"{[] == (1 / 0)}",
+        b"{[!0] || (1 / 0)}",
+        b"{[!1] && (1 / 0)}",
+    ),
+)
+def test_short_circuit_list_comprehension(input: bytes) -> None:
+    rule = Rule(parse(input))
+    compiled = rule.compile()
+
+    rule.evaluate({}, {})
+    compiled({}, {})

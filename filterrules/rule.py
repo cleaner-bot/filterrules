@@ -62,8 +62,29 @@ def _evaluate(expr: ast.ExpressionLike, ctx: RuleContext) -> typing.Any:
         case ast.ArrayConstructor(items):
             return tuple(_evaluate(item, ctx) for item in items)
 
+        case ast.ArrayComprehension(inner):
+            left = _evaluate(inner.left, ctx)
+
+            if not left:  # empty
+                return left
+
+            match inner.operator:  # short circuit logic
+                case "and":
+                    if not any(left):
+                        return left
+                case "or":
+                    if all(left):
+                        return left
+
+            right = _evaluate(inner.right, ctx)
+            return tuple(
+                _evaluate_binary_operation(inner.operator, item, right, ctx)
+                for item in left
+            )
+
         case ast.BinaryOperation(operator, _, _):
             left = _evaluate(expr.left, ctx)
+
             match operator:  # short circuit logic
                 case "and":
                     if not left:
@@ -82,60 +103,7 @@ def _evaluate(expr: ast.ExpressionLike, ctx: RuleContext) -> typing.Any:
                     "cannot use non-string right-value on a string in untrusted mode"
                 )
 
-            match operator:
-                case "add":
-                    r = left + right
-                    if (
-                        isinstance(r, (str, bytes))
-                        and len(r) >= 65536
-                        and ctx.untrusted
-                    ):
-                        raise RuntimeError(
-                            "string longer than allowed in untrusted mode"
-                        )
-                    return r
-                case "subtract":
-                    return left - right
-                case "multiply":
-                    return left * right
-                case "divide":
-                    return left / right
-                case "modulo":
-                    return left % right
-                case "pow":
-                    if ctx.untrusted:
-                        raise RuntimeError(
-                            "pow operation (**) is disabled in untrusted mode"
-                        )
-                    return left**right
-                case "equals":
-                    return left == right
-                case "not-equals":
-                    return left != right
-                case "greater-than":
-                    return left > right
-                case "greater-than-or-equals":
-                    return left >= right
-                case "less-than":
-                    return left < right
-                case "less-than-or-equals":
-                    return left <= right
-                case "and" | "or":
-                    return right
-                case "band":
-                    return left & right
-                case "bor":
-                    return left | right
-                case "bxor":
-                    return left ^ right
-                case "lshift":
-                    if ctx.untrusted and (right > 128 or (left >= 1 << 128)):
-                        raise RuntimeError("lshift operation with too big values")
-                    return left << right
-                case "rshift":
-                    return left >> right
-                case "in":
-                    return left in right
+            return _evaluate_binary_operation(operator, left, right, ctx)
 
         case ast.UnaryOperation(operator, _):
             value = _evaluate(expr.value, ctx)
@@ -154,6 +122,57 @@ def _evaluate(expr: ast.ExpressionLike, ctx: RuleContext) -> typing.Any:
             return ctx.functions[name](*args)
 
     raise RuntimeError(f"unknown ast node: {expr}")
+
+
+def _evaluate_binary_operation(
+    operator: str, left: typing.Any, right: typing.Any, ctx: RuleContext
+) -> typing.Any:
+    match operator:
+        case "add":
+            r = left + right
+            if isinstance(r, (str, bytes)) and len(r) >= 65536 and ctx.untrusted:
+                raise RuntimeError("string longer than allowed in untrusted mode")
+            return r
+        case "subtract":
+            return left - right
+        case "multiply":
+            return left * right
+        case "divide":
+            return left / right
+        case "modulo":
+            return left % right
+        case "pow":
+            if ctx.untrusted:
+                raise RuntimeError("pow operation (**) is disabled in untrusted mode")
+            return left**right
+        case "equals":
+            return left == right
+        case "not-equals":
+            return left != right
+        case "greater-than":
+            return left > right
+        case "greater-than-or-equals":
+            return left >= right
+        case "less-than":
+            return left < right
+        case "less-than-or-equals":
+            return left <= right
+        case "and" | "or":
+            return right
+        case "band":
+            return left & right
+        case "bor":
+            return left | right
+        case "bxor":
+            return left ^ right
+        case "lshift":
+            if ctx.untrusted and (right > 128 or (left >= 1 << 128)):
+                raise RuntimeError("lshift operation with too big values")
+            return left << right
+        case "rshift":
+            return left >> right
+        case "in":
+            return left in right
 
 
 _binary_operator_map = {
@@ -194,27 +213,44 @@ def _compile(expr: ast.ExpressionLike, untrusted: bool) -> str:
 
         case ast.ArrayConstructor(items):
             content = ", ".join(_compile(item, untrusted) for item in items)
-            return f"[{content}]"
+            if len(items) == 1:
+                content += ","
+            return f"({content})"
+
+        case ast.ArrayComprehension(inner):
+            left = _compile(inner.left, untrusted)
+            right = _compile(inner.right, untrusted)
+            varname = "x"
+
+            raw_body = _compile_binary_operation(inner.operator, untrusted)
+            body = raw_body % (varname, right)
+
+            return f"tuple({body} for {varname} in {left})"
 
         case ast.BinaryOperation(operator, _, _):
             left = _compile(expr.left, untrusted)
             right = _compile(expr.right, untrusted)
-            if untrusted:
-                if operator == "pow":
-                    raise RuntimeError(
-                        "pow operation (**) is disabled in untrusted mode"
-                    )
-                elif operator in ("lshift", "add"):
-                    return f"__untrusted_{operator}({left}, {right})"
 
-            return f"({left} {_binary_operator_map[operator]} {right})"
+            raw_body = _compile_binary_operation(operator, untrusted)
+            return raw_body % (left, right)
 
         case ast.UnaryOperation(operator, _):
             value = _compile(expr.value, untrusted)
-            return f"{_unaery_operator_map[operator]} {value}"
+            return f"({_unaery_operator_map[operator]} {value})"
 
         case ast.FunctionCall(name, arguments):
             args = ", ".join(_compile(arg, untrusted) for arg in arguments)
             return f"fns[{name!r}]({args})"
 
     raise RuntimeError(f"unknown ast node: {expr}")
+
+
+def _compile_binary_operation(operator: str, untrusted: bool) -> str:
+    if untrusted:
+        if operator == "pow":
+            raise RuntimeError("pow operation (**) is disabled in untrusted mode")
+        elif operator in ("lshift", "add"):
+            return f"__untrusted_{operator}(%s, %s)"
+
+    raw_operator = _binary_operator_map[operator].replace("%", "%%")
+    return f"(%s {raw_operator} %s)"
